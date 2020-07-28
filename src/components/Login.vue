@@ -1,19 +1,23 @@
 <template>
   <!-- 登录组件 -->
   <div class="login">
-    <el-form :model="loginForm">
+    <!--
+      model: 绑定的数据对象
+      :rules: 对数据进行检验，配合prop使用
+    -->
+    <el-form :model="loginForm" :rules="rules" label-width="80px" status-icon ref="form">
       <h1>用户登录</h1>
-      <el-form-item label="用户名" label-width="80px">
+      <el-form-item label="用户名" prop="username">
         <el-input v-model="loginForm.username" placeholder="请输入用户名"></el-input>
       </el-form-item>
-      <el-form-item label="密码" label-width="80px">
-        <el-input v-model="loginForm.password" placeholder="请输入密码"></el-input>
+      <el-form-item label="密码" prop="password">
+        <el-input type="password" v-model="loginForm.password" placeholder="请输入密码"></el-input>
       </el-form-item>
-      <el-form-item label="验证码" label-width="80px" class="code">
+      <el-form-item label="验证码" class="code" prop="code">
         <el-input v-model="loginForm.code" placeholder="请输入验证码"></el-input>
         <img :src="verifyCodeUrl" alt="验证码" @click="updateCode()" />
       </el-form-item>
-      <el-button type="success">登录</el-button>
+      <el-button type="success" @click="login">登录</el-button>
       <el-button type="info" @click="resetFrom">重置</el-button>
     </el-form>
   </div>
@@ -30,18 +34,59 @@ export default {
         // 验证码
         code: ''
       },
-      verifyCodeUrl: ''
+      verifyCodeUrl: '',
+      // 校验
+      rules: {
+        // blur 当文本框获得焦点后，没有输入任何内容触发
+        // change 当文本框获得焦点后，输入任何内容触发
+        username: [
+          { required: true, message: '用户名不能为空', trigger: ['change', 'blur'] },
+          { min: 4, max: 10, message: '用户名长度在 4 到 10 个字符', trigger: ['change', 'blur'] }
+        ],
+        password: [
+          { required: true, message: '密码不能为空', trigger: ['change', 'blur'] },
+          { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: ['change', 'blur'] }
+        ],
+        code: [
+          { required: true, message: '验证码不能为空', trigger: ['change', 'blur'] },
+          { min: 4, max: 4, message: '验证码为 4 个字符', trigger: ['change', 'blur'] }
+        ]
+      }
     }
   },
   methods: {
     // 重置表单
     resetFrom () {
-
+      this.$refs.form.resetFields()
     },
     // 修改验证码
     updateCode () {
       // 加上时间戳，防止缓存
       this.verifyCodeUrl = this.$axios.defaults.baseURL + 'verifyCode/' + new Date()
+    },
+    // 登录
+    async login () {
+      try {
+        await this.$refs.form.validate()
+        console.log('发请求')
+        // 发送请求
+        const res = await this.$axios.post('login', {
+          ...this.loginForm,
+          // 对密码进行base64加密
+          password: btoa(this.loginForm.password)
+        })
+
+        if (res.status === 200) {
+          // 登录成功，跳转到首页，并将token存入localStorage
+          this.$router.push('/home')
+          localStorage.setItem('token', res.data)
+          this.$message.success('登录成功')
+        } else {
+          this.$message.error(res.message)
+        }
+      } catch (error) {
+        return false
+      }
     }
   },
   created () {
