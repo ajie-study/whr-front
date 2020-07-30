@@ -79,7 +79,7 @@ export default {
         if (res.status === 200) {
           // 登录成功，跳转到首页，并将token存入localStorage
           this.$router.push('/home')
-          localStorage.setItem('token', res.data)
+          localStorage.setItem('vhr_token', res.data)
           this.$message.success('登录成功')
         } else {
           this.$message.error(res.message)

@@ -11,8 +11,12 @@ const Home = () => import(/* webpackChunkName: "home" */ '../components/Home.vue
 // 将axios绑定到vue原型上
 Vue.prototype.$axios = Axios
 
+console.log(process.env, 'process.env')
+
 // 设置默认的baseUrl
-Axios.defaults.baseURL = 'http://127.0.0.1:9000/api/'
+// Axios.defaults.baseURL = 'http://127.0.0.1:9000/api/'
+// 多环境配置
+Axios.defaults.baseURL = process.env.VUE_APP_URL
 
 // 请求拦截器
 Axios.interceptors.request.use(function (config) {
@@ -38,6 +42,21 @@ const routes = [
 
 const router = new VueRouter({
   routes
+})
+
+/**
+ *  设置导航前置守卫
+ *  to  去哪里
+ *  from   来自哪里
+ *  next   next('/login') 去登录   next() 放行  express
+ */
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('vhr_token')
+  if (to.path === '/login' || token) {
+    next()
+  } else {
+    next('/login')
+  }
 })
 
 export default router
